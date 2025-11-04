@@ -1,0 +1,17 @@
+# LM Studio 로컬 LLM 설정
+llm:
+  provider: "lmstudio"
+  model: "local-model"  # LM Studio에서 로드한 모델 이름
+  base_url: "http://localhost:1234"  # LM Studio 기본 포트
+  temperature: 0.7
+  max_tokens: 2000
+
+# 프롬프트 최적화 설정
+optimization:
+  max_iterations: 3  # 최대 최적화 반복 횟수
+  temperature: 0.7   # 최적화 시 사용할 temperature
+
+# 디스플레이 설정
+display:
+  show_timestamps: true  # 타임스탬프 표시 여부
+  color_output: true     # 색상 출력 사용 여부
