@@ -13,7 +13,7 @@ Ollama 연결 테스트
   Base URL: http://localhost:11434
 
 연결 중...
-/Users/ez2sarang/Documents/dev/kiro/langchain/src/llm_provider.py:77: LangChainDeprecationWarning: The class `Ollama` was deprecated in LangCh
+./langchain-prompt-optimizer/src/llm_provider.py:77: LangChainDeprecationWarning: The class `Ollama` was deprecated in LangCh
 ain 0.3.1 and will be removed in 1.0.0. An updated version of the class exists in the `langchain-ollama package and should be used instead. To use it run `pip install -U `langchain-ollama` and import as `from `langchain_ollama import OllamaLLM``.                                        return Ollama(
 ✅ 연결 성공!
 
@@ -38,7 +38,7 @@ python src/main.py --config config/ollama_config.yaml --query "파이썬으로 �
 ╚══════════════════════════════════════════════════════════════╝
 
 [23:38:30] ℹ️  LLM 서비스 연결 중...
-/Users/ez2sarang/Documents/dev/kiro/langchain/src/llm_provider.py:77: LangChainDeprecationWarning: The class `Ollama` was deprecated in LangCh
+./langchain-prompt-optimizer/src/llm_provider.py:77: LangChainDeprecationWarning: The class `Ollama` was deprecated in LangCh
 ain 0.3.1 and will be removed in 1.0.0. An updated version of the class exists in the `langchain-ollama package and should be used instead. To use it run `pip install -U `langchain-ollama` and import as `from `langchain_ollama import OllamaLLM``.                                        return Ollama(
 [23:38:30] ✅ LLM 서비스 연결 성공!
 
