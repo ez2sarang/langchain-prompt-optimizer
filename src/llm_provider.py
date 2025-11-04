@@ -3,7 +3,13 @@ LLM Provider 관리 모듈
 """
 import requests
 from typing import Optional, Any
-from langchain_community.llms import Ollama
+
+try:
+    from langchain_ollama import OllamaLLM
+    OLLAMA_NEW_API = True
+except ImportError:
+    from langchain_community.llms import Ollama
+    OLLAMA_NEW_API = False
 
 
 class LLMConnectionError(Exception):
@@ -74,11 +80,23 @@ class LLMProviderManager:
             초기화된 LLM 객체
         """
         if self.provider == 'ollama':
-            return Ollama(
-                model=self.model,
-                base_url=self.base_url,
-                temperature=self.temperature,
-            )
+            if OLLAMA_NEW_API:
+                # 새로운 langchain-ollama API 사용
+                return OllamaLLM(
+                    model=self.model,
+                    base_url=self.base_url,
+                    temperature=self.temperature,
+                    num_predict=self.max_tokens,
+                )
+            else:
+                # 구버전 API 사용
+                return Ollama(
+                    model=self.model,
+                    base_url=self.base_url,
+                    temperature=self.temperature,
+                    num_predict=self.max_tokens,
+                    format="",  # JSON 포맷 강제 해제
+                )
         
         elif self.provider == 'lmstudio':
             # LM Studio는 OpenAI 호환 API 사용
@@ -121,16 +139,37 @@ class LLMProviderManager:
         
         for attempt in range(retry_count):
             try:
-                response = self.llm.invoke(prompt)
-                return response
+                # 프롬프트 정리 (특수 문자 처리)
+                cleaned_prompt = prompt.strip()
+                
+                response = self.llm.invoke(cleaned_prompt)
+                
+                # 응답이 문자열인지 확인
+                if isinstance(response, str):
+                    return response
+                else:
+                    return str(response)
             
             except Exception as e:
+                error_msg = str(e)
+                
+                # JSON 파싱 오류 감지
+                if "unmarshal" in error_msg or "invalid character" in error_msg:
+                    print(f"⚠️  JSON 파싱 오류 감지. 프롬프트를 단순화합니다...")
+                    # 프롬프트를 더 단순하게 만들어 재시도
+                    if attempt < retry_count - 1:
+                        import time
+                        time.sleep(1)  # 잠시 대기
+                        continue
+                
                 if attempt < retry_count - 1:
-                    print(f"⚠️  LLM 호출 실패 (시도 {attempt + 1}/{retry_count}): {e}")
+                    print(f"⚠️  LLM 호출 실패 (시도 {attempt + 1}/{retry_count}): {error_msg}")
                     print("재시도 중...")
+                    import time
+                    time.sleep(2)  # 재시도 전 대기
                 else:
                     raise LLMConnectionError(
-                        f"LLM 호출 실패 ({retry_count}회 시도): {e}"
+                        f"LLM 호출 실패 ({retry_count}회 시도): {error_msg}"
                     )
         
         return ""

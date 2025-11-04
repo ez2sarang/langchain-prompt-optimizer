@@ -50,17 +50,17 @@ class PromptOptimizer:
         if query_length > 5000:
             raise OptimizationError("질의가 너무 깁니다 (최대 5000자).")
         
-        # LLM을 사용한 질의 분석
-        analysis_prompt = f"""다음 사용자 질의를 분석하고 평가해주세요:
+        # LLM을 사용한 질의 분석 (단순화된 프롬프트)
+        analysis_prompt = f"""Analyze this query and rate it:
 
-질의: "{query}"
+Query: {query}
 
-다음 항목에 대해 간단히 평가해주세요:
-1. 명확성 (1-10점): 질의가 얼마나 명확한가?
-2. 완전성 (1-10점): 필요한 정보가 충분히 포함되어 있는가?
-3. 컨텍스트: 어떤 컨텍스트가 추가되면 좋을까?
+Rate these aspects (1-10):
+1. Clarity: How clear is the query?
+2. Completeness: Is enough information provided?
+3. Context: What context would help?
 
-각 항목을 한 줄로 간단히 답변해주세요."""
+Answer briefly in 3 lines."""
 
         try:
             analysis_response = self.llm_provider.invoke(analysis_prompt)
@@ -107,21 +107,20 @@ class PromptOptimizer:
         Returns:
             최적화된 프롬프트
         """
-        # 최적화 프롬프트 생성
-        optimization_prompt = f"""다음 사용자 질의를 더 명확하고 효과적인 프롬프트로 개선해주세요.
+        # 최적화 프롬프트 생성 (단순화)
+        optimization_prompt = f"""Improve this query to be more clear and effective.
 
-원본 질의: "{query}"
+Original query: {query}
 
-분석 결과:
-{self._format_analysis(analysis)}
+Analysis: {self._format_analysis(analysis)}
 
-개선 지침:
-1. 질의의 핵심 의도를 유지하세요
-2. 더 구체적이고 명확한 표현을 사용하세요
-3. 필요한 컨텍스트를 추가하세요
-4. 구조화된 형식으로 작성하세요
+Guidelines:
+1. Keep the core intent
+2. Be more specific
+3. Add helpful context
+4. Use structured format
 
-개선된 프롬프트만 출력해주세요 (설명 없이)."""
+Output only the improved prompt without explanation."""
 
         try:
             optimized = self.llm_provider.invoke(optimization_prompt)
