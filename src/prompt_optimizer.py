@@ -32,6 +32,22 @@ class PromptOptimizer:
         self.llm_provider = llm_provider
         self.optimization_steps: List[OptimizationStep] = []
     
+    def _sanitize_text(self, text: str) -> str:
+        """
+        텍스트에서 문제가 될 수 있는 문자 정리
+        
+        Args:
+            text: 원본 텍스트
+            
+        Returns:
+            정리된 텍스트
+        """
+        # 작은따옴표를 큰따옴표로 변경
+        text = text.replace("'", '"')
+        # 연속된 공백 제거
+        text = ' '.join(text.split())
+        return text.strip()
+    
     def analyze_query(self, query: str) -> Dict[str, str]:
         """
         질의 분석
@@ -50,17 +66,35 @@ class PromptOptimizer:
         if query_length > 5000:
             raise OptimizationError("질의가 너무 깁니다 (최대 5000자).")
         
-        # LLM을 사용한 질의 분석 (단순화된 프롬프트)
-        analysis_prompt = f"""Analyze this query and rate it:
+        # 텍스트 정리
+        clean_query = self._sanitize_text(query)
+        
+        # 언어 감지 (간단한 방법)
+        is_korean = any(ord(char) >= 0xAC00 and ord(char) <= 0xD7A3 for char in query)
+        
+        # LLM을 사용한 질의 분석 (간단한 프롬프트)
+        if is_korean:
+            analysis_prompt = f"""질의를 분석하세요.
 
-Query: {query}
+질의: {clean_query}
 
-Rate these aspects (1-10):
-1. Clarity: How clear is the query?
-2. Completeness: Is enough information provided?
-3. Context: What context would help?
+평가 (1-10점):
+1. 명확성
+2. 완전성
+3. 필요한 컨텍스트
 
-Answer briefly in 3 lines."""
+각 항목을 한 줄로 답변하세요."""
+        else:
+            analysis_prompt = f"""Analyze this query.
+
+Query: {clean_query}
+
+Rate (1-10):
+1. Clarity
+2. Completeness
+3. Needed context
+
+Answer each in one line."""
 
         try:
             analysis_response = self.llm_provider.invoke(analysis_prompt)
@@ -107,20 +141,27 @@ Answer briefly in 3 lines."""
         Returns:
             최적화된 프롬프트
         """
-        # 최적화 프롬프트 생성 (단순화)
-        optimization_prompt = f"""Improve this query to be more clear and effective.
+        # 텍스트 정리
+        clean_query = self._sanitize_text(query)
+        
+        # 언어 감지
+        is_korean = any(ord(char) >= 0xAC00 and ord(char) <= 0xD7A3 for char in query)
+        
+        # 최적화 프롬프트 생성 (매우 단순화)
+        if is_korean:
+            optimization_prompt = f"""질의를 개선하세요.
 
-Original query: {query}
+원본: {clean_query}
 
-Analysis: {self._format_analysis(analysis)}
+더 구체적이고 명확하게 작성하세요.
+개선된 질의만 출력하세요."""
+        else:
+            optimization_prompt = f"""Improve this query.
 
-Guidelines:
-1. Keep the core intent
-2. Be more specific
-3. Add helpful context
-4. Use structured format
+Original: {clean_query}
 
-Output only the improved prompt without explanation."""
+Make it more specific and clear.
+Output only the improved query."""
 
         try:
             optimized = self.llm_provider.invoke(optimization_prompt)
